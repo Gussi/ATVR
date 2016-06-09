@@ -37,15 +37,18 @@ def product_scrape(sourcetree):
 
     abv_info = soup.find("span", string="Styrkleiki:")
     volume_info = soup.find("span", string="Eining:")
-    id_info = soup.find("span", string='Vörunúmer:')
+    id_info = soup.find("span", string="Vörunúmer:")
+    country_info = soup.find("span", string="Land:")
 
     #Thankfully the DOM makes sense, so I can just find the next sibling. Easy!
     abv = abv_info.find_next_sibling("span")
     volume = volume_info.find_next_sibling("span")
     product_id = id_info.find_next_sibling("span")
+    country = country_info.find_next_sibling("span")
     abv = abv.text
     volume = volume.text
     product_id = product_id.text
+    country = country.text
 
 
     #For some reason, all the fields are littered with garbage escape characters
@@ -57,9 +60,15 @@ def product_scrape(sourcetree):
     name = name.translate(translator)
     category = category.translate(translator)
     subcategory = subcategory.translate(translator)
+    description = description.translate(translator).strip()
     abv = abv.translate(translator)
     volume = volume.translate(translator)
     product_id = product_id.translate(translator).strip()
+    country = country.translate(translator).strip()
+
+    #These are kept as decimals in the database, better strip it now
+    price = price.replace(".", "")
+    abv = abv.replace("%", "").replace(",", ".")
 
     #TODO: look into returning a json string
 
@@ -68,9 +77,11 @@ def product_scrape(sourcetree):
         "price": price,
         "category": category,
         "subcategory": subcategory,
+        "description": description,
         "abv": abv,
         "volume": volume,
-        "product_id": product_id
+        "product_id": product_id,
+        "country": country
     }
     return product
 
