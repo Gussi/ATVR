@@ -1,17 +1,35 @@
 from bs4 import BeautifulSoup
+import grequests
 import requests
-import sys
 import re
 
-def product_scrape(url):
+def request(urls):
+    #Here be async http requests
+    rs = [grequests.get(u) for u in urls]
+    trees = grequests.map(rs)
+    products = []
+    for t in trees:
+        product = product_scrape(t.text)
+        if product != -1:
+            products.append(product)
+    return products
+    
+def product_scrape(sourcetree):
     #TODO: refactor this shit, it doesn't have to be this long
 
-    #The initial page request
-    sourcetree = requests.get(url).text
-    soup = BeautifulSoup(sourcetree, "html5lib")
+    soup = BeautifulSoup(sourcetree, "lxml")
+
+    title = soup.title.text
+    if title == "Síðan sem þú baðst um fannst ekki - Vínbúðin":
+        return -1
 
     #All the relevant fields scraped
     price = soup.find("div", class_="price").text
+
+    #Check if the product is valid before doing anything else
+    if re.search("Ekkert verð", price):
+        return -1
+
     name = soup.find("h3", class_="title").text
     category = soup.find("span", class_="category").text
     subcategory = soup.find("span", class_="taste").text
@@ -29,9 +47,6 @@ def product_scrape(url):
     volume = volume.text
     product_id = product_id.text
 
-    #Checking if the product is valid before doing anything else
-    if product_id == "Engar upplýsingar":
-        return -1
 
     #For some reason, all the fields are littered with garbage escape characters
     garbage = "\n\t"
@@ -57,10 +72,5 @@ def product_scrape(url):
         "volume": volume,
         "product_id": product_id
     }
-
     return product
 
-product = product_scrape("http://www.vinbudin.is/Heim/v%C3%B6rur/stoek-vara.aspx/?productid=12104/")
-product_beer = product_scrape("http://www.vinbudin.is/Heim/v%C3%B6rur/stoek-vara.aspx/?productid=01215/")
-print(product)
-print(product_beer)
