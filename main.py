@@ -29,4 +29,4 @@ for p in products:
     ))
     connection.commit()
 connection.close()
-print("Success! (probably))
+print("Success! (probably)")
